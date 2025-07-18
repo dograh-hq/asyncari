@@ -37,6 +37,12 @@ test = [
     "pytest",
 ]
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"asyncari" = ["py.typed"]
+
 [tool.setuptools_scm]
 
 [tool.flake8]
