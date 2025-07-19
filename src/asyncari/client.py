@@ -15,11 +15,12 @@ from pprint import pformat
 
 import anyio
 from asyncswagger11.client import SwaggerClient
-from wsproto.events import CloseConnection, TextMessage
+from wsproto.events import CloseConnection, TextMessage, Pong
 
 from .model import CLASS_MAP
 from .model import Channel, Bridge, Playback, LiveRecording, StoredRecording, Endpoint, DeviceState, Sound
 from .model import Repository
+from .websocket_wrapper import WebSocketWrapper
 
 log = logging.getLogger(__name__)
 
@@ -180,6 +181,8 @@ class Client:
 
         try:
             ws = await self.swagger.events.eventWebsocket(app=apps)
+            # Wrap the WebSocket to add ping functionality
+            ws = WebSocketWrapper(ws)
             self.websockets.add(ws)
 
             if evt is not None:
@@ -242,6 +245,9 @@ class Client:
 
             if isinstance(msg, CloseConnection):
                 break
+            elif isinstance(msg, Pong):
+                log.debug("Received WebSocket pong: %s", msg.payload)
+                continue  # ignore pong frames
             elif not isinstance(msg, TextMessage):
                 log.warning("Unknown JSON message type: %s", repr(msg))
                 continue  # ignore
